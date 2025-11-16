@@ -1,13 +1,16 @@
-// app/(tabs)/history.tsx - HISTORY SCREEN
+// app/(tabs)/history.tsx - INTERACTIVE HISTORY SCREEN
+import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import React from 'react';
+import React, { useState } from 'react';
 import {
+  Alert,
   Platform,
   SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import {
@@ -24,7 +27,54 @@ import {
 } from '../components/shared';
 
 export default function HistoryScreen() {
-  const recentScans = initialScans;
+  const [recentScans, setRecentScans] = useState(initialScans);
+  const [filter, setFilter] = useState<'all' | 'blocked' | 'flagged' | 'safe'>('all');
+
+  const handleFilterPress = async (newFilter: typeof filter) => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setFilter(newFilter);
+  };
+
+  const handleScanPress = async (scan: any) => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    Alert.alert(
+      'Scan Details',
+      `URL: ${scan.url}\nType: ${scan.type}\nThreat: ${scan.threat}\nStatus: ${scan.status}\nTime: ${scan.time}`,
+      [{ text: 'OK' }]
+    );
+  };
+
+  const handleDeleteScan = async (scanId: number) => {
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setRecentScans(recentScans.filter(s => s.id !== scanId));
+    Alert.alert('Deleted', 'Scan removed from history');
+  };
+
+  const handleClearAll = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    Alert.alert(
+      'Clear All History',
+      'Are you sure you want to delete all scan history?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Clear', 
+          style: 'destructive',
+          onPress: async () => {
+            await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            setRecentScans([]);
+          }
+        }
+      ]
+    );
+  };
+
+  const filteredScans = filter === 'all' 
+    ? recentScans 
+    : recentScans.filter(s => s.status === filter);
+
+  const blockedCount = recentScans.filter(s => s.status === 'blocked').length;
+  const safeCount = recentScans.filter(s => s.status === 'safe').length;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -33,7 +83,14 @@ export default function HistoryScreen() {
       {/* Header */}
       <LinearGradient colors={['#0F172A', '#1E293B', '#0F172A']} style={styles.header}>
         <View style={styles.headerContent}>
-          <View style={styles.headerLeft}>
+          <TouchableOpacity 
+            style={styles.headerLeft}
+            onPress={async () => {
+              await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              Alert.alert('ZeroTrust IoT', 'Scan History & Analytics');
+            }}
+            activeOpacity={0.7}
+          >
             <View style={styles.headerIconWrapper}>
               <LinearGradient colors={['#EF4444', '#EC4899']} style={styles.headerIcon}>
                 <Icon name="shield" size={28} color="#FFF" />
@@ -44,21 +101,35 @@ export default function HistoryScreen() {
               <Text style={styles.headerTitle}>ZeroTrust IoT</Text>
               <Text style={styles.headerSubtitle}>AI Security Platform</Text>
             </View>
-          </View>
-          <View style={styles.headerRight}>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.headerRight}
+            onPress={async () => {
+              await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              Alert.alert('Status', 'All systems protected');
+            }}
+            activeOpacity={0.7}
+          >
             <View style={styles.headerStatus}>
               <View style={styles.headerStatusDot} />
               <Text style={styles.headerStatusText}>PROTECTED</Text>
             </View>
             <Text style={styles.headerTime}>{new Date().toLocaleTimeString()}</Text>
-          </View>
+          </TouchableOpacity>
         </View>
       </LinearGradient>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* History Header */}
         <LinearGradient colors={['#0F172A', '#581C87', '#0F172A']} style={styles.historyHeader}>
-          <View style={styles.historyHeaderContent}>
+          <TouchableOpacity 
+            style={styles.historyHeaderContent}
+            onPress={async () => {
+              await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              Alert.alert('Scan History', `Total of ${recentScans.length} security scans performed`);
+            }}
+            activeOpacity={0.8}
+          >
             <View style={styles.historyHeaderTextContainer}>
               <Text style={styles.historyHeaderTitle}>Scan History</Text>
               <Text style={styles.historyHeaderSubtitle}>Recent security analysis</Text>
@@ -66,95 +137,214 @@ export default function HistoryScreen() {
             <View style={styles.historyHeaderIcon}>
               <Icon name="eye" size={28} color="#FFF" />
             </View>
-          </View>
+          </TouchableOpacity>
           <View style={styles.historyHeaderMeta}>
-            <View style={styles.liveIndicator}>
+            <TouchableOpacity 
+              style={styles.liveIndicator}
+              onPress={async () => {
+                await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                Alert.alert('Live Monitoring', 'Real-time threat detection is active');
+              }}
+              activeOpacity={0.7}
+            >
               <View style={styles.liveDot} />
               <Text style={styles.liveText}>Live monitoring active</Text>
-            </View>
-            <Text style={styles.historyCount}>{recentScans.length} total scans</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={async () => {
+                await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                Alert.alert('Total Scans', `${recentScans.length} scans in history`);
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.historyCount}>{recentScans.length} total scans</Text>
+            </TouchableOpacity>
           </View>
         </LinearGradient>
 
+        {/* Filter Buttons */}
+        <View style={styles.filterContainer}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <TouchableOpacity
+              style={[styles.filterButton, filter === 'all' && styles.filterButtonActive]}
+              onPress={() => handleFilterPress('all')}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.filterText, filter === 'all' && styles.filterTextActive]}>
+                All ({recentScans.length})
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.filterButton, filter === 'blocked' && styles.filterButtonActive, { borderColor: '#FCA5A5' }]}
+              onPress={() => handleFilterPress('blocked')}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.filterText, filter === 'blocked' && styles.filterTextActive]}>
+                Blocked ({blockedCount})
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.filterButton, filter === 'flagged' && styles.filterButtonActive, { borderColor: '#FCD34D' }]}
+              onPress={() => handleFilterPress('flagged')}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.filterText, filter === 'flagged' && styles.filterTextActive]}>
+                Flagged ({recentScans.filter(s => s.status === 'flagged').length})
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.filterButton, filter === 'safe' && styles.filterButtonActive, { borderColor: '#6EE7B7' }]}
+              onPress={() => handleFilterPress('safe')}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.filterText, filter === 'safe' && styles.filterTextActive]}>
+                Safe ({safeCount})
+              </Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+
         {/* Scan List */}
         <View style={styles.historyList}>
-          {recentScans.map((scan, index) => {
-            const threatColors = getThreatColors(scan.threat);
-            return (
-              <View key={scan.id} style={styles.historyItem}>
-                <View style={styles.historyItemContent}>
-                  <View style={[
-                    styles.historyItemIcon, 
-                    { backgroundColor: threatColors.bg, borderColor: threatColors.border }
-                  ]}>
-                    <Icon 
-                      name={scan.type === 'url' ? 'globe' : scan.type === 'email' ? 'mail' : 'message'} 
-                      size={18} 
-                      color={threatColors.text} 
-                    />
-                  </View>
-                  <View style={styles.historyItemText}>
-                    <Text style={styles.historyItemTitle} numberOfLines={1}>{scan.url}</Text>
-                    <View style={styles.historyItemMeta}>
-                      <Text style={styles.historyItemType}>{scan.type} scan</Text>
-                      <Text style={styles.historyItemSeparator}>•</Text>
-                      <Text style={styles.historyItemTime}>{scan.time}</Text>
+          {filteredScans.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Icon name="eye" size={48} color={colors.neutral.gray400} />
+              <Text style={styles.emptyText}>No scans found</Text>
+              <Text style={styles.emptySubtext}>Try a different filter</Text>
+            </View>
+          ) : (
+            filteredScans.map((scan, index) => {
+              const threatColors = getThreatColors(scan.threat);
+              return (
+                <TouchableOpacity 
+                  key={scan.id} 
+                  style={styles.historyItem}
+                  onPress={() => handleScanPress(scan)}
+                  onLongPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+                    Alert.alert(
+                      'Delete Scan',
+                      'Remove this scan from history?',
+                      [
+                        { text: 'Cancel', style: 'cancel' },
+                        { text: 'Delete', style: 'destructive', onPress: () => handleDeleteScan(scan.id) }
+                      ]
+                    );
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.historyItemContent}>
+                    <View style={[
+                      styles.historyItemIcon, 
+                      { backgroundColor: threatColors.bg, borderColor: threatColors.border }
+                    ]}>
+                      <Icon 
+                        name={scan.type === 'url' ? 'globe' : scan.type === 'email' ? 'mail' : 'message'} 
+                        size={18} 
+                        color={threatColors.text} 
+                      />
+                    </View>
+                    <View style={styles.historyItemText}>
+                      <Text style={styles.historyItemTitle} numberOfLines={1}>{scan.url}</Text>
+                      <View style={styles.historyItemMeta}>
+                        <Text style={styles.historyItemType}>{scan.type} scan</Text>
+                        <Text style={styles.historyItemSeparator}>•</Text>
+                        <Text style={styles.historyItemTime}>{scan.time}</Text>
+                      </View>
                     </View>
                   </View>
-                </View>
-                <View style={styles.historyItemRight}>
-                  <View style={[
-                    styles.historyItemStatus,
-                    {
-                      backgroundColor: scan.status === 'blocked' ? '#FEE2E2' :
-                                     scan.status === 'flagged' ? '#FEF3C7' : '#D1FAE5',
-                      borderColor: scan.status === 'blocked' ? '#FCA5A5' :
-                                 scan.status === 'flagged' ? '#FCD34D' : '#6EE7B7'
-                    }
-                  ]}>
-                    <Text style={[
-                      styles.historyItemStatusText,
+                  <View style={styles.historyItemRight}>
+                    <View style={[
+                      styles.historyItemStatus,
                       {
-                        color: scan.status === 'blocked' ? colors.error.dark :
-                              scan.status === 'flagged' ? colors.warning.dark : colors.success.dark
+                        backgroundColor: scan.status === 'blocked' ? '#FEE2E2' :
+                                       scan.status === 'flagged' ? '#FEF3C7' : '#D1FAE5',
+                        borderColor: scan.status === 'blocked' ? '#FCA5A5' :
+                                   scan.status === 'flagged' ? '#FCD34D' : '#6EE7B7'
                       }
                     ]}>
-                      {scan.status.toUpperCase()}
-                    </Text>
+                      <Text style={[
+                        styles.historyItemStatusText,
+                        {
+                          color: scan.status === 'blocked' ? colors.error.dark :
+                                scan.status === 'flagged' ? colors.warning.dark : colors.success.dark
+                        }
+                      ]}>
+                        {scan.status.toUpperCase()}
+                      </Text>
+                    </View>
+                    <View style={styles.historyItemRisk}>
+                      <View style={[styles.historyRiskDot, { backgroundColor: threatColors.text }]} />
+                      <Text style={[styles.historyItemRiskText, { color: threatColors.text }]}>
+                        {scan.threat} risk
+                      </Text>
+                    </View>
                   </View>
-                  <View style={styles.historyItemRisk}>
-                    <View style={[styles.historyRiskDot, { backgroundColor: threatColors.text }]} />
-                    <Text style={[styles.historyItemRiskText, { color: threatColors.text }]}>
-                      {scan.threat} risk
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            );
-          })}
+                </TouchableOpacity>
+              );
+            })
+          )}
         </View>
 
         {/* Stats Summary */}
-        <View style={styles.historySummary}>
-          <View style={styles.historySummaryHeader}>
-            <Icon name="trending" size={18} color={colors.primary.main} />
-            <Text style={styles.historySummaryTitle}>Analysis Summary</Text>
-          </View>
-          <View style={styles.historySummaryGrid}>
-            <View style={styles.historySummaryItem}>
-              <Text style={[styles.historySummaryValue, { color: colors.error.dark }]}>
-                {recentScans.filter(s => s.status === 'blocked').length}
-              </Text>
-              <Text style={styles.historySummaryLabel}>Threats Blocked</Text>
+        {recentScans.length > 0 && (
+          <TouchableOpacity 
+            style={styles.historySummary}
+            onPress={async () => {
+              await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              Alert.alert(
+                'Analysis Summary',
+                `Blocked: ${blockedCount}\nSafe: ${safeCount}\nTotal: ${recentScans.length}`
+              );
+            }}
+            activeOpacity={0.8}
+          >
+            <View style={styles.historySummaryHeader}>
+              <Icon name="trending" size={18} color={colors.primary.main} />
+              <Text style={styles.historySummaryTitle}>Analysis Summary</Text>
             </View>
-            <View style={styles.historySummaryItem}>
-              <Text style={[styles.historySummaryValue, { color: colors.success.dark }]}>
-                {recentScans.filter(s => s.status === 'safe').length}
-              </Text>
-              <Text style={styles.historySummaryLabel}>Safe Content</Text>
+            <View style={styles.historySummaryGrid}>
+              <TouchableOpacity 
+                style={styles.historySummaryItem}
+                onPress={async () => {
+                  await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  Alert.alert('Threats Blocked', `${blockedCount} malicious items detected and blocked`);
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.historySummaryValue, { color: colors.error.dark }]}>
+                  {blockedCount}
+                </Text>
+                <Text style={styles.historySummaryLabel}>Threats Blocked</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.historySummaryItem}
+                onPress={async () => {
+                  await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  Alert.alert('Safe Content', `${safeCount} items verified as safe`);
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.historySummaryValue, { color: colors.success.dark }]}>
+                  {safeCount}
+                </Text>
+                <Text style={styles.historySummaryLabel}>Safe Content</Text>
+              </TouchableOpacity>
             </View>
-          </View>
-        </View>
+          </TouchableOpacity>
+        )}
+
+        {/* Clear History Button */}
+        {recentScans.length > 0 && (
+          <TouchableOpacity
+            style={styles.clearButton}
+            onPress={handleClearAll}
+            activeOpacity={0.8}
+          >
+            <Icon name="cross" size={18} color={colors.error.main} />
+            <Text style={styles.clearButtonText}>Clear All History</Text>
+          </TouchableOpacity>
+        )}
 
         <View style={{ height: verticalScale(20) }} />
       </ScrollView>
@@ -304,8 +494,47 @@ const styles = StyleSheet.create({
     fontSize: normalize(11),
     color: 'rgba(196,181,253,0.7)',
   },
+  filterContainer: {
+    marginBottom: verticalSpacing.lg,
+  },
+  filterButton: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: verticalScale(10),
+    borderRadius: moderateScale(12),
+    borderWidth: 2,
+    borderColor: colors.neutral.gray300,
+    backgroundColor: colors.neutral.white,
+    marginRight: spacing.sm,
+  },
+  filterButtonActive: {
+    backgroundColor: colors.primary.main,
+    borderColor: colors.primary.main,
+  },
+  filterText: {
+    fontSize: normalize(12),
+    fontWeight: '600',
+    color: colors.neutral.gray700,
+  },
+  filterTextActive: {
+    color: colors.neutral.white,
+  },
   historyList: {
     marginBottom: verticalSpacing.lg,
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: verticalScale(60),
+  },
+  emptyText: {
+    fontSize: normalize(16),
+    fontWeight: '600',
+    color: colors.neutral.gray600,
+    marginTop: verticalSpacing.md,
+  },
+  emptySubtext: {
+    fontSize: normalize(12),
+    color: colors.neutral.gray400,
+    marginTop: verticalScale(4),
   },
   historyItem: {
     backgroundColor: 'rgba(255,255,255,0.9)',
@@ -390,6 +619,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#DBEAFE',
     padding: spacing.lg,
+    marginBottom: verticalSpacing.md,
   },
   historySummaryHeader: {
     flexDirection: 'row',
@@ -424,5 +654,22 @@ const styles = StyleSheet.create({
     fontSize: normalize(11),
     color: colors.neutral.gray500,
     textAlign: 'center',
+  },
+  clearButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.neutral.white,
+    borderRadius: moderateScale(14),
+    borderWidth: 2,
+    borderColor: colors.error.light,
+    padding: spacing.md,
+    ...shadows.sm,
+  },
+  clearButtonText: {
+    fontSize: normalize(14),
+    fontWeight: '600',
+    color: colors.error.main,
+    marginLeft: spacing.sm,
   },
 });

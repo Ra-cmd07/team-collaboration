@@ -1,9 +1,10 @@
-// app/(tabs)/index.tsx - SCANNER SCREEN
+// app/(tabs)/index.tsx - FULLY INTERACTIVE SCANNER SCREEN
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Animated,
   Platform,
   SafeAreaView,
@@ -33,12 +34,19 @@ export default function ScannerScreen() {
   const [scanResult, setScanResult] = useState<any>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [urlInput, setUrlInput] = useState('');
-  const [fadeAnim] = useState(new Animated.Value(1));
+  const fadeAnim = useRef(new Animated.Value(1)).current;
 
   const performScan = async (inputData: string, type = 'url') => {
+    if (!inputData.trim()) {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert('Empty Input', 'Please enter a URL or text to scan');
+      return;
+    }
+
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setIsScanning(true);
-    
+    setScanResult(null);
+
     setTimeout(() => {
       let result = {
         input: inputData,
@@ -53,7 +61,7 @@ export default function ScannerScreen() {
       if (type === 'url') {
         const urlAnalysis = analyzeUrl(inputData);
         result = { ...result, ...urlAnalysis };
-      } else if (type === 'email' || type === 'sms') {
+      } else {
         const contentAnalysis = analyzeContent(inputData);
         result = { ...result, ...contentAnalysis };
       }
@@ -82,14 +90,32 @@ export default function ScannerScreen() {
     }, 2000);
   };
 
+  const handleClearInput = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setUrlInput('');
+    setScanResult(null);
+  };
+
+  const handleClearResult = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setScanResult(null);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
       
-      {/* Header */}
+      {/* Header - Touchable Logo */}
       <LinearGradient colors={['#0F172A', '#1E293B', '#0F172A']} style={styles.header}>
         <View style={styles.headerContent}>
-          <View style={styles.headerLeft}>
+          <TouchableOpacity 
+            style={styles.headerLeft}
+            onPress={async () => {
+              await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              Alert.alert('ZeroTrust IoT', 'Advanced AI Security Platform v1.0');
+            }}
+            activeOpacity={0.7}
+          >
             <View style={styles.headerIconWrapper}>
               <LinearGradient colors={['#EF4444', '#EC4899']} style={styles.headerIcon}>
                 <Icon name="shield" size={28} color="#FFF" />
@@ -100,26 +126,40 @@ export default function ScannerScreen() {
               <Text style={styles.headerTitle}>ZeroTrust IoT</Text>
               <Text style={styles.headerSubtitle}>AI Security Platform</Text>
             </View>
-          </View>
-          <View style={styles.headerRight}>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.headerRight}
+            onPress={async () => {
+              await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              Alert.alert('Status', 'All systems protected and operational');
+            }}
+            activeOpacity={0.7}
+          >
             <View style={styles.headerStatus}>
               <View style={styles.headerStatusDot} />
               <Text style={styles.headerStatusText}>PROTECTED</Text>
             </View>
             <Text style={styles.headerTime}>{new Date().toLocaleTimeString()}</Text>
-          </View>
+          </TouchableOpacity>
         </View>
       </LinearGradient>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        {/* Hero Section */}
+        {/* Hero Section - Touchable Stats */}
         <LinearGradient
           colors={['#4F46E5', '#7C3AED', '#EC4899']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.heroCard}
         >
-          <View style={styles.heroHeader}>
+          <TouchableOpacity 
+            style={styles.heroHeader}
+            onPress={async () => {
+              await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              Alert.alert('AI Scanner', 'Powered by advanced machine learning algorithms');
+            }}
+            activeOpacity={0.8}
+          >
             <View style={styles.heroTextContainer}>
               <Text style={styles.heroTitle}>AI Security Scanner</Text>
               <Text style={styles.heroSubtitle}>Advanced threat detection powered by Zero Trust</Text>
@@ -127,26 +167,54 @@ export default function ScannerScreen() {
             <View style={styles.heroIcon}>
               <Icon name="activity" size={28} color="#FFF" />
             </View>
-          </View>
+          </TouchableOpacity>
+          
           <View style={styles.statsGrid}>
-            <View style={styles.statItem}>
+            <TouchableOpacity 
+              style={styles.statItem}
+              onPress={async () => {
+                await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                Alert.alert('Threats Blocked', `${phishingStats.threatsBlocked} threats blocked today`);
+              }}
+              activeOpacity={0.7}
+            >
               <Text style={styles.statValue}>{phishingStats.threatsBlocked}</Text>
-              <Text style={styles.statLabel}>Blocked</Text>
-            </View>
-            <View style={styles.statItem}>
+              <Text style={styles.statLabel}>Blocked Today</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.statItem}
+              onPress={async () => {
+                await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                Alert.alert('Accuracy Rate', `${phishingStats.successRate}% detection accuracy`);
+              }}
+              activeOpacity={0.7}
+            >
               <Text style={styles.statValue}>{phishingStats.successRate}%</Text>
               <Text style={styles.statLabel}>Accuracy</Text>
-            </View>
-            <View style={styles.statItem}>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.statItem}
+              onPress={async () => {
+                await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                Alert.alert('URLs Scanned', `${phishingStats.urlsChecked} URLs checked today`);
+              }}
+              activeOpacity={0.7}
+            >
               <Text style={styles.statValue}>{phishingStats.urlsChecked}</Text>
               <Text style={styles.statLabel}>Scanned</Text>
-            </View>
+            </TouchableOpacity>
           </View>
         </LinearGradient>
 
-        {/* URL Scanner */}
+        {/* URL Scanner Card */}
         <View style={styles.card}>
-          <View style={styles.cardHeader}>
+          <TouchableOpacity 
+            style={styles.cardHeader}
+            onPress={async () => {
+              await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            }}
+            activeOpacity={0.9}
+          >
             <LinearGradient colors={['#3B82F6', '#06B6D4']} style={styles.iconGradient}>
               <Icon name="search" size={22} color="#FFF" />
             </LinearGradient>
@@ -154,7 +222,7 @@ export default function ScannerScreen() {
               <Text style={styles.cardTitle}>URL Security Scanner</Text>
               <Text style={styles.cardSubtitle}>Real-time threat analysis</Text>
             </View>
-          </View>
+          </TouchableOpacity>
 
           <View style={styles.inputContainer}>
             <Icon name="globe" size={18} color={colors.neutral.gray400} />
@@ -165,6 +233,11 @@ export default function ScannerScreen() {
               onChangeText={setUrlInput}
               placeholderTextColor={colors.neutral.gray400}
             />
+            {urlInput.length > 0 && (
+              <TouchableOpacity onPress={handleClearInput} style={styles.clearButton}>
+                <Icon name="cross" size={16} color={colors.neutral.gray500} />
+              </TouchableOpacity>
+            )}
           </View>
 
           <TouchableOpacity
@@ -194,10 +267,13 @@ export default function ScannerScreen() {
         {/* Quick Scan Options */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quick Demo Tests</Text>
-          <Text style={styles.sectionSubtitle}>Try these examples to see detection in action</Text>
+          <Text style={styles.sectionSubtitle}>Tap any card to test detection</Text>
           <View style={styles.quickScanGrid}>
             <TouchableOpacity
-              onPress={() => performScan('Urgent! Your PayPal account has been suspended. Click here to verify immediately!', 'email')}
+              onPress={async () => {
+                await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                performScan('Urgent! Your PayPal account suspended. Click here now!', 'email');
+              }}
               activeOpacity={0.7}
               style={[styles.quickScanButton, { backgroundColor: '#FEF2F2', borderColor: '#FCA5A5' }]}
             >
@@ -209,7 +285,10 @@ export default function ScannerScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={() => performScan('paypal-security-verify.com/login', 'url')}
+              onPress={async () => {
+                await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                performScan('paypal-security-verify.com/login', 'url');
+              }}
               activeOpacity={0.7}
               style={[styles.quickScanButton, { backgroundColor: '#FFFBEB', borderColor: '#FCD34D' }]}
             >
@@ -220,9 +299,23 @@ export default function ScannerScreen() {
               <Text style={[styles.quickScanSubtext, { color: colors.warning.light }]}>Test malicious domain</Text>
             </TouchableOpacity>
           </View>
+          <TouchableOpacity
+            onPress={async () => {
+              await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              performScan('https://google.com', 'url');
+            }}
+            activeOpacity={0.7}
+            style={[styles.quickScanButton, { backgroundColor: '#ECFDF5', borderColor: '#6EE7B7', width: '100%' }]}
+          >
+            <LinearGradient colors={['#10B981', '#059669']} style={styles.quickScanIcon}>
+              <Icon name="check" size={28} color="#FFF" />
+            </LinearGradient>
+            <Text style={[styles.quickScanText, { color: colors.success.dark }]}>Safe URL Test</Text>
+            <Text style={[styles.quickScanSubtext, { color: colors.success.light }]}>Test legitimate website</Text>
+          </TouchableOpacity>
         </View>
 
-        {/* Scan Result */}
+        {/* Scan Result with Touchable Actions */}
         {scanResult && (
           <Animated.View style={{ opacity: fadeAnim }}>
             <View style={[
@@ -235,27 +328,40 @@ export default function ScannerScreen() {
               }
             ]}>
               <View style={styles.resultHeader}>
-                <View style={[
-                  styles.resultIcon,
-                  {
-                    backgroundColor: scanResult.recommendation === 'block' ? colors.error.main :
-                                   scanResult.recommendation === 'warn' ? colors.warning.main : colors.success.main
-                  }
-                ]}>
+                <TouchableOpacity 
+                  style={[
+                    styles.resultIcon,
+                    {
+                      backgroundColor: scanResult.recommendation === 'block' ? colors.error.main :
+                                     scanResult.recommendation === 'warn' ? colors.warning.main : colors.success.main
+                    }
+                  ]}
+                  onPress={async () => {
+                    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  }}
+                  activeOpacity={0.7}
+                >
                   <Icon
                     name={scanResult.recommendation === 'block' ? 'cross' :
                          scanResult.recommendation === 'warn' ? 'alert' : 'check'}
                     size={28}
                     color="#FFF"
                   />
-                </View>
+                </TouchableOpacity>
                 <View style={styles.resultHeaderText}>
                   <Text style={styles.resultTitle}>
                     {scanResult.recommendation === 'block' ? 'THREAT DETECTED' :
                      scanResult.recommendation === 'warn' ? 'SUSPICIOUS CONTENT' :
                      'CONTENT VERIFIED SAFE'}
                   </Text>
-                  <View style={styles.resultMeta}>
+                  <TouchableOpacity 
+                    style={styles.resultMeta}
+                    onPress={async () => {
+                      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      Alert.alert('Risk Score', `Threat level: ${scanResult.riskScore}/100`);
+                    }}
+                    activeOpacity={0.7}
+                  >
                     <View style={[
                       styles.riskDot,
                       {
@@ -264,11 +370,24 @@ export default function ScannerScreen() {
                       }
                     ]} />
                     <Text style={styles.resultRisk}>Risk: {scanResult.riskScore}/100</Text>
-                  </View>
+                  </TouchableOpacity>
                 </View>
+                <TouchableOpacity 
+                  onPress={handleClearResult}
+                  style={styles.closeButton}
+                  activeOpacity={0.7}
+                >
+                  <Icon name="cross" size={20} color={colors.neutral.gray500} />
+                </TouchableOpacity>
               </View>
 
-              <View style={styles.resultContent}>
+              <TouchableOpacity 
+                style={styles.resultContent}
+                onPress={async () => {
+                  await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }}
+                activeOpacity={0.9}
+              >
                 <View style={styles.resultTarget}>
                   <View style={styles.resultTargetHeader}>
                     <Icon name="zap" size={14} color={colors.primary.main} />
@@ -284,32 +403,48 @@ export default function ScannerScreen() {
                       <Text style={styles.threatsSectionTitle}>Detected Threats</Text>
                     </View>
                     {scanResult.threats.map((threat: string, index: number) => (
-                      <View key={index} style={styles.threatItem}>
+                      <TouchableOpacity 
+                        key={index} 
+                        style={styles.threatItem}
+                        onPress={async () => {
+                          await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          Alert.alert('Threat Detail', threat);
+                        }}
+                        activeOpacity={0.7}
+                      >
                         <View style={styles.threatDot} />
                         <Text style={styles.threatText}>{threat}</Text>
-                      </View>
+                      </TouchableOpacity>
                     ))}
                   </View>
                 )}
-              </View>
+              </TouchableOpacity>
 
-              <View style={styles.resultAction}>
+              <TouchableOpacity 
+                style={styles.resultAction}
+                onPress={async () => {
+                  await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                  Alert.alert('Action Taken', 'Content has been processed according to Zero Trust policy');
+                }}
+                activeOpacity={0.8}
+              >
                 <View style={styles.resultActionHeader}>
                   <Icon name="lock" size={18} color="#FFF" />
                   <Text style={styles.resultActionTitle}>Zero Trust Action</Text>
                 </View>
                 <Text style={styles.resultActionText}>
                   {scanResult.recommendation === 'block' ? 
-                    '🚫 Access denied. Multiple threat indicators detected. Content quarantined and reported.' :
+                    '🚫 Access denied. Multiple threat indicators detected. Content quarantined.' :
                    scanResult.recommendation === 'warn' ?
-                    '⚠️ Caution advised. Suspicious patterns found. Additional verification required.' :
-                    '✅ All clear. No malicious indicators detected. Safe to proceed with normal security practices.'}
+                    '⚠️ Caution advised. Suspicious patterns found. Verify before proceeding.' :
+                    '✅ All clear. No malicious indicators. Safe to proceed with caution.'}
                 </Text>
-              </View>
+              </TouchableOpacity>
             </View>
           </Animated.View>
         )}
 
+        <View style={{ height: verticalScale(20) }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -441,6 +576,7 @@ const styles = StyleSheet.create({
   },
   statItem: {
     alignItems: 'center',
+    padding: spacing.sm,
   },
   statValue: {
     fontSize: normalize(18),
@@ -451,6 +587,7 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: normalize(10),
     color: 'rgba(255,255,255,0.7)',
+    textAlign: 'center',
   },
   card: {
     backgroundColor: 'rgba(255,255,255,0.9)',
@@ -504,6 +641,9 @@ const styles = StyleSheet.create({
     paddingVertical: verticalScale(10),
     minHeight: verticalScale(40),
   },
+  clearButton: {
+    padding: spacing.sm,
+  },
   scanButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -539,6 +679,7 @@ const styles = StyleSheet.create({
   quickScanGrid: {
     flexDirection: 'row',
     gap: spacing.md,
+    marginBottom: spacing.md,
   },
   quickScanButton: {
     flex: 1,
@@ -600,7 +741,6 @@ const styles = StyleSheet.create({
   resultMeta: {
     flexDirection: 'row',
     alignItems: 'center',
-    flexWrap: 'wrap',
   },
   riskDot: {
     width: moderateScale(9),
@@ -612,6 +752,9 @@ const styles = StyleSheet.create({
     fontSize: normalize(12),
     fontWeight: '600',
     color: colors.neutral.gray500,
+  },
+  closeButton: {
+    padding: spacing.sm,
   },
   resultContent: {
     marginBottom: verticalSpacing.md,
