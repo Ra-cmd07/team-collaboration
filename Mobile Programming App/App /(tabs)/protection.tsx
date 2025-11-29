@@ -1,6 +1,7 @@
-// app/(tabs)/protection.tsx - INTERACTIVE PROTECTION SCREEN
+// app/(tabs)/protection.tsx - COMPLETE INTERACTIVE PROTECTION SCREEN WITH LOGOUT
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
   Alert,
@@ -13,10 +14,13 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Dimensions, // Import Dimensions for dynamic scaling
 } from 'react-native';
+// FIX: Using a standard Expo icon component directly to resolve the rendering issue
+import Ionicons from '@expo/vector-icons/Ionicons'; 
+import { useAuth } from '../../contexts/AuthContext';
 import {
   colors,
-  Icon,
   moderateScale,
   normalize,
   phishingPatterns,
@@ -25,9 +29,50 @@ import {
   spacing,
   verticalScale,
   verticalSpacing
+  // FIX: Removed Icon from the shared component imports as it was causing the error
+  // Assuming the rest of these imports (colors, moderateScale, etc.) are correct.
 } from '../components/shared';
 
+// Get screen dimensions for dynamic layout checks
+const { height: screenHeight } = Dimensions.get('window');
+
+// Use a calculated padding for the header to account for the notch on larger phones
+const HEADER_TOP_PADDING = Platform.OS === 'android' 
+  ? StatusBar.currentHeight! + verticalScale(5) 
+  : verticalScale(10);
+const SCROLL_BOTTOM_PADDING = screenHeight > 800 ? verticalScale(120) : verticalScale(100);
+
+// Define a separate Icon component here using the standard library
+// to replace the one that was causing the error in components/shared.
+// This is the cleanest fix without modifying the shared file.
+// We use a switch-case to simulate the behavior seen in the original code,
+// but relying on Ionicons for the 'cross', 'shield', 'eye', 'lock', 'wifi', 'alert', 'users', 'zap', 'check', 'mail' icons.
+const CustomIcon = ({ name, size, color }: { name: string, size: number, color: string }) => {
+    let iconName: keyof typeof Ionicons.glyphMap | string = 'ios-alert'; // Default
+    
+    // Map the string names used in your original JSX to Ionicons names
+    switch (name) {
+        case 'shield': iconName = 'shield-half-sharp'; break;
+        case 'cross': iconName = 'close-sharp'; break;
+        case 'activity': iconName = 'pulse-sharp'; break;
+        case 'eye': iconName = 'eye-sharp'; break;
+        case 'lock': iconName = 'lock-closed-sharp'; break;
+        case 'wifi': iconName = 'wifi-sharp'; break;
+        case 'alert': iconName = 'alert-circle-sharp'; break;
+        case 'users': iconName = 'people-sharp'; break;
+        case 'zap': iconName = 'flash-sharp'; break;
+        case 'check': iconName = 'checkmark-circle-sharp'; break;
+        case 'mail': iconName = 'mail-sharp'; break;
+        default: iconName = 'ios-alert';
+    }
+
+    return <Ionicons name={iconName as keyof typeof Ionicons.glyphMap} size={size} color={color} />;
+};
+
+
 export default function ProtectionScreen() {
+  const router = useRouter();
+  const { user, logout } = useAuth();
   const [aiMonitoring, setAiMonitoring] = useState(true);
   const [zeroTrustEngine, setZeroTrustEngine] = useState(true);
   const [networkAnalysis, setNetworkAnalysis] = useState(true);
@@ -39,6 +84,30 @@ export default function ProtectionScreen() {
       name,
       `${name} has been ${!current ? 'enabled' : 'disabled'}`,
       [{ text: 'OK' }]
+    );
+  };
+
+  const handleLogout = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await logout();
+              await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              router.replace('/login');
+            } catch (error) {
+              Alert.alert('Error', 'Failed to logout. Please try again.');
+            }
+          }
+        }
+      ]
     );
   };
 
@@ -59,7 +128,7 @@ export default function ProtectionScreen() {
           >
             <View style={styles.headerIconWrapper}>
               <LinearGradient colors={['#EF4444', '#EC4899']} style={styles.headerIcon}>
-                <Icon name="shield" size={28} color="#FFF" />
+                <CustomIcon name="shield" size={28} color="#FFF" />
               </LinearGradient>
               <View style={styles.headerBadge} />
             </View>
@@ -85,7 +154,52 @@ export default function ProtectionScreen() {
         </View>
       </LinearGradient>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      {/* Scrollable Content Area */}
+      <ScrollView 
+        style={styles.content} 
+        showsVerticalScrollIndicator={false} 
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: SCROLL_BOTTOM_PADDING }]}
+      >
+        {/* User Info & Logout Section */}
+        {user && (
+          <TouchableOpacity
+            style={styles.userCard}
+            onPress={async () => {
+              await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              Alert.alert(
+                'Account Information',
+                `Name: ${user.first_name} ${user.last_name}\nEmail: ${user.email}\nUsername: ${user.username}`
+              );
+            }}
+            activeOpacity={0.9}
+          >
+            <LinearGradient colors={['#7C3AED', '#EC4899']} style={styles.userCardGradient}>
+              <View style={styles.userCardContent}>
+                <View style={styles.userAvatar}>
+                  <Text style={styles.userAvatarText}>
+                    {user.first_name?.charAt(0) || user.username?.charAt(0) || 'U'}
+                  </Text>
+                </View>
+                <View style={styles.userInfo}>
+                  <Text style={styles.userName}>
+                    {user.first_name || user.username || 'User'}
+                  </Text>
+                  <Text style={styles.userEmail}>{user.email}</Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                style={styles.logoutButton}
+                onPress={handleLogout}
+                activeOpacity={0.8}
+              >
+                {/* LINE FIXED: Changed to use CustomIcon */}
+                <CustomIcon name="cross" size={18} color="#FFF" /> 
+                <Text style={styles.logoutButtonText}>Logout</Text>
+              </TouchableOpacity>
+            </LinearGradient>
+          </TouchableOpacity>
+        )}
+
         {/* Main Protection Status */}
         <TouchableOpacity
           onPress={async () => {
@@ -104,7 +218,7 @@ export default function ProtectionScreen() {
                 <Text style={styles.protectionSubtitle}>Advanced AI security active</Text>
               </View>
               <View style={styles.protectionIcon}>
-                <Icon name="shield" size={36} color="#FFF" />
+                <CustomIcon name="shield" size={36} color="#FFF" />
               </View>
             </View>
             <View style={styles.protectionStats}>
@@ -113,7 +227,7 @@ export default function ProtectionScreen() {
                   style={styles.protectionStatCard}
                   onPress={async () => {
                     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    Alert.alert('Threats Blocked', `${phishingStats.threatsBlocked} threats neutralized today`);
+                    Alert.alert('Threats Blocked', `${phishingStats.threatsBlocked} malicious items detected and blocked`);
                   }}
                   activeOpacity={0.8}
                 >
@@ -170,7 +284,7 @@ export default function ProtectionScreen() {
             }}
             activeOpacity={0.8}
           >
-            <Icon name="activity" size={22} color={colors.primary.main} />
+            <CustomIcon name="activity" size={22} color={colors.primary.main} />
             <Text style={styles.cardTitle}>Real-time Protection</Text>
           </TouchableOpacity>
           <View style={styles.protectionList}>
@@ -187,7 +301,7 @@ export default function ProtectionScreen() {
               <LinearGradient colors={['#ECFDF5', '#D1FAE5']} style={styles.protectionItem}>
                 <View style={styles.protectionItemLeft}>
                   <LinearGradient colors={['#10B981', '#059669']} style={styles.protectionItemIcon}>
-                    <Icon name="eye" size={22} color="#FFF" />
+                    <CustomIcon name="eye" size={22} color="#FFF" />
                   </LinearGradient>
                   <View style={styles.protectionItemTextContainer}>
                     <Text style={styles.protectionItemTitle}>AI Monitoring</Text>
@@ -218,7 +332,7 @@ export default function ProtectionScreen() {
               <LinearGradient colors={['#EFF6FF', '#DBEAFE']} style={styles.protectionItem}>
                 <View style={styles.protectionItemLeft}>
                   <LinearGradient colors={['#3B82F6', '#2563EB']} style={styles.protectionItemIcon}>
-                    <Icon name="lock" size={22} color="#FFF" />
+                    <CustomIcon name="lock" size={22} color="#FFF" />
                   </LinearGradient>
                   <View style={styles.protectionItemTextContainer}>
                     <Text style={styles.protectionItemTitle}>Zero Trust Engine</Text>
@@ -249,7 +363,7 @@ export default function ProtectionScreen() {
               <LinearGradient colors={['#FAF5FF', '#F3E8FF']} style={styles.protectionItem}>
                 <View style={styles.protectionItemLeft}>
                   <LinearGradient colors={['#A855F7', '#9333EA']} style={styles.protectionItemIcon}>
-                    <Icon name="wifi" size={22} color="#FFF" />
+                    <CustomIcon name="wifi" size={22} color="#FFF" />
                   </LinearGradient>
                   <View style={styles.protectionItemTextContainer}>
                     <Text style={styles.protectionItemTitle}>Network Analysis</Text>
@@ -279,7 +393,7 @@ export default function ProtectionScreen() {
           activeOpacity={0.9}
         >
           <View style={styles.threatIntelHeader}>
-            <Icon name="alert" size={22} color="#F87171" />
+            <CustomIcon name="alert" size={22} color="#F87171" />
             <Text style={styles.threatIntelTitle}>Threat Intelligence</Text>
           </View>
           {phishingPatterns.slice(0, 4).map((pattern, index) => (
@@ -293,7 +407,7 @@ export default function ProtectionScreen() {
               activeOpacity={0.7}
             >
               <View style={styles.threatPatternIcon}>
-                <Icon name="alert" size={14} color="#F87171" />
+                <CustomIcon name="alert" size={14} color="#F87171" />
               </View>
               <Text style={styles.threatPatternText} numberOfLines={1}>"{pattern}"</Text>
               <View style={styles.threatPatternBadge}>
@@ -313,7 +427,7 @@ export default function ProtectionScreen() {
             activeOpacity={0.8}
           >
             <View style={styles.threatNetworkHeader}>
-              <Icon name="users" size={18} color="#FB923C" />
+              <CustomIcon name="users" size={18} color="#FB923C" />
               <Text style={styles.threatNetworkTitle}>Global Threat Network</Text>
             </View>
             <Text style={styles.threatNetworkText}>
@@ -332,7 +446,7 @@ export default function ProtectionScreen() {
             }}
             activeOpacity={0.8}
           >
-            <Icon name="zap" size={22} color={colors.warning.main} />
+            <CustomIcon name="zap" size={22} color={colors.warning.main} />
             <Text style={styles.cardTitle}>Security Tips</Text>
           </TouchableOpacity>
           <View style={styles.tipsList}>
@@ -348,7 +462,7 @@ export default function ProtectionScreen() {
             >
               <LinearGradient colors={['#ECFDF5', '#D1FAE5']} style={styles.tipItem}>
                 <View style={styles.tipIcon}>
-                  <Icon name="check" size={18} color="#FFF" />
+                  <CustomIcon name="check" size={18} color="#FFF" />
                 </View>
                 <View style={styles.tipContent}>
                   <Text style={styles.tipTitle}>Verify Before Clicking</Text>
@@ -369,7 +483,7 @@ export default function ProtectionScreen() {
             >
               <LinearGradient colors={['#EFF6FF', '#DBEAFE']} style={styles.tipItem}>
                 <View style={[styles.tipIcon, { backgroundColor: colors.primary.main }]}>
-                  <Icon name="lock" size={18} color="#FFF" />
+                  <CustomIcon name="lock" size={18} color="#FFF" />
                 </View>
                 <View style={styles.tipContent}>
                   <Text style={styles.tipTitle}>Check for HTTPS</Text>
@@ -390,7 +504,7 @@ export default function ProtectionScreen() {
             >
               <LinearGradient colors={['#FAF5FF', '#F3E8FF']} style={styles.tipItem}>
                 <View style={[styles.tipIcon, { backgroundColor: '#A855F7' }]}>
-                  <Icon name="mail" size={18} color="#FFF" />
+                  <CustomIcon name="mail" size={18} color="#FFF" />
                 </View>
                 <View style={styles.tipContent}>
                   <Text style={styles.tipTitle}>Suspicious Email Signs</Text>
@@ -413,7 +527,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.neutral.gray100,
   },
   header: {
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight! + verticalScale(5) : verticalScale(10),
+    paddingTop: HEADER_TOP_PADDING, 
     paddingBottom: verticalScale(15),
     paddingHorizontal: spacing.lg,
     ...shadows.lg,
@@ -422,10 +536,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    width: '100%', 
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexShrink: 1, 
   },
   headerIconWrapper: {
     position: 'relative',
@@ -450,6 +566,7 @@ const styles = StyleSheet.create({
   },
   headerText: {
     marginLeft: spacing.md,
+    flexShrink: 1, 
   },
   headerTitle: {
     fontSize: normalize(18),
@@ -462,6 +579,7 @@ const styles = StyleSheet.create({
   },
   headerRight: {
     alignItems: 'flex-end',
+    flexShrink: 0, 
   },
   headerStatus: {
     flexDirection: 'row',
@@ -486,10 +604,69 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: spacing.lg,
+    paddingHorizontal: spacing.lg,
   },
   scrollContent: {
-    paddingBottom: Platform.OS === 'ios' ? verticalScale(120) : verticalScale(100),
+    paddingTop: spacing.lg, 
+  },
+  userCard: {
+    marginBottom: verticalSpacing.lg,
+    borderRadius: moderateScale(20),
+    overflow: 'hidden',
+    ...shadows.lg,
+  },
+  userCardGradient: {
+    padding: spacing.lg,
+  },
+  userCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: verticalSpacing.md,
+  },
+  userAvatar: {
+    width: moderateScale(56),
+    height: moderateScale(56),
+    borderRadius: moderateScale(28),
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.md,
+    flexShrink: 0,
+  },
+  userAvatarText: {
+    fontSize: normalize(24),
+    fontWeight: 'bold',
+    color: colors.neutral.white,
+  },
+  userInfo: {
+    flex: 1,
+  },
+  userName: {
+    fontSize: normalize(18),
+    fontWeight: 'bold',
+    color: colors.neutral.white,
+    marginBottom: 4,
+  },
+  userEmail: {
+    fontSize: normalize(13),
+    color: 'rgba(255,255,255,0.8)',
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(239,68,68,0.2)',
+    paddingVertical: verticalScale(12),
+    paddingHorizontal: spacing.lg,
+    borderRadius: moderateScale(12),
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  logoutButtonText: {
+    fontSize: normalize(15),
+    fontWeight: '600',
+    color: colors.neutral.white,
+    marginLeft: spacing.sm,
   },
   protectionHeader: {
     borderRadius: moderateScale(20),
@@ -525,6 +702,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   protectionStats: {
     flexDirection: 'row',
@@ -537,7 +715,7 @@ const styles = StyleSheet.create({
   protectionStatCard: {
     backgroundColor: 'rgba(255,255,255,0.2)',
     borderRadius: moderateScale(14),
-    padding: spacing.md,
+    padding: spacing.sm,
     alignItems: 'center',
     minHeight: verticalScale(70),
     justifyContent: 'center',
@@ -570,6 +748,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.neutral.gray900,
     marginLeft: spacing.md,
+    flexShrink: 1,
   },
   protectionList: {
     gap: verticalScale(10),
@@ -595,6 +774,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.md,
+    flexShrink: 0,
   },
   protectionItemTextContainer: {
     flex: 1,
@@ -611,6 +791,7 @@ const styles = StyleSheet.create({
   },
   protectionItemRight: {
     marginLeft: spacing.md,
+    flexShrink: 0,
   },
   threatIntelCard: {
     backgroundColor: colors.neutral.gray800,
@@ -661,6 +842,7 @@ const styles = StyleSheet.create({
     paddingVertical: verticalScale(4),
     borderRadius: moderateScale(6),
     flexShrink: 0,
+    marginLeft: spacing.sm,
   },
   threatPatternBadgeText: {
     fontSize: normalize(9),
