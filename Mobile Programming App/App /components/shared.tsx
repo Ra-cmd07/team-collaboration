@@ -150,20 +150,20 @@ export const getThreatColors = (level: string) => {
 
 // Interfaces
 export interface ScanResult {
-  id: number;
+  id: string;
   url: string;
-  type: string;
-  threat: string;
+  type: 'url' | 'email' | 'sms';
+  threat: 'high' | 'medium' | 'low';
+  status: 'blocked' | 'flagged' | 'safe';
   time: string;
-  status: string;
 }
 
 // Initial scan data
 export const initialScans: ScanResult[] = [
-  { id: 1, url: 'paypal-security.com', type: 'url', threat: 'high', time: '2 min ago', status: 'blocked' },
-  { id: 2, url: 'gmail message', type: 'email', threat: 'medium', time: '5 min ago', status: 'flagged' },
-  { id: 3, url: 'amazon-login.net', type: 'url', threat: 'high', time: '10 min ago', status: 'blocked' },
-  { id: 4, url: 'SMS verification', type: 'sms', threat: 'low', time: '15 min ago', status: 'safe' }
+  { id: '1', url: 'paypal-security.com', type: 'url', threat: 'high', time: '2 min ago', status: 'blocked' },
+  { id: '2', url: 'gmail message', type: 'email', threat: 'medium', time: '5 min ago', status: 'flagged' },
+  { id: '3', url: 'amazon-login.net', type: 'url', threat: 'high', time: '10 min ago', status: 'blocked' },
+  { id: '4', url: 'SMS verification', type: 'sms', threat: 'low', time: '15 min ago', status: 'safe' }
 ];
 
 // Responsive spacing
@@ -228,4 +228,5 @@ export const shadows = {
     shadowRadius: 12,
     elevation: 8,
   },
+
 };

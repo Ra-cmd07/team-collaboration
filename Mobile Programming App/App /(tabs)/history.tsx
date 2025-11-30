@@ -27,10 +27,11 @@ import {
   initialScans,
   moderateScale,
   normalize,
+  ScanResult,
   shadows,
   spacing,
   verticalScale,
-  verticalSpacing
+  verticalSpacing,
 } from '../components/shared';
 
 // Type definitions
@@ -441,7 +442,11 @@ export default function HistoryScreen() {
         </View>
       </LinearGradient>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
         {/* History Header */}
         <LinearGradient colors={isDark ? ['#1E293B', '#581C87', '#1E293B'] : ['#0F172A', '#581C87', '#0F172A']} style={styles.historyHeader}>
           <TouchableOpacity 
@@ -459,16 +464,9 @@ export default function HistoryScreen() {
             <View style={styles.historyHeaderIcon}>
               <Icon name="eye" size={28} color="#FFF" />
             </View>
-          </TouchableOpacity>
+          </View>
           <View style={styles.historyHeaderMeta}>
-            <TouchableOpacity 
-              style={styles.liveIndicator}
-              onPress={async () => {
-                await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                Alert.alert('Live Monitoring', 'Real-time threat detection is active');
-              }}
-              activeOpacity={0.7}
-            >
+            <View style={styles.liveIndicator}>
               <View style={styles.liveDot} />
               <Text style={styles.liveText}>Live monitoring active</Text>
             </TouchableOpacity>
@@ -568,6 +566,7 @@ export default function HistoryScreen() {
             </>
           )}
         </View>
+      </Modal>
 
         {/* Grouped Scan List */}
         {filteredScans.length === 0 ? (
@@ -638,9 +637,6 @@ export default function HistoryScreen() {
                 </Text>
                 <Text style={[styles.historySummaryLabel, { color: colors.textSecondary }]}>Safe Content</Text>
               </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        )}
 
         <View style={{ height: verticalScale(20) }} />
       </ScrollView>
@@ -959,7 +955,7 @@ const styles = StyleSheet.create({
   historyHeader: {
     borderRadius: moderateScale(20),
     padding: spacing.lg,
-    marginBottom: verticalSpacing.lg,
+    marginBottom: verticalSpacing.md,
   },
   historyHeaderContent: {
     flexDirection: 'row',
@@ -1074,11 +1070,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   filterButton: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: verticalScale(10),
+    paddingHorizontal: spacing.md,
+    paddingVertical: verticalScale(8),
     borderRadius: moderateScale(12),
     borderWidth: 2,
     marginRight: spacing.sm,
+    borderWidth: 2,
+    borderColor: 'transparent',
   },
   filterText: {
     fontSize: normalize(12),
@@ -1110,6 +1108,34 @@ const styles = StyleSheet.create({
   },
   clearAllIcon: {
     fontSize: normalize(18),
+  },
+  clearAllButton: {
+    width: moderateScale(40),
+    height: moderateScale(40),
+    borderRadius: moderateScale(12),
+    backgroundColor: '#FEE2E2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: spacing.sm,
+  },
+  clearAllIcon: {
+    fontSize: normalize(18),
+  },
+  sortButton: {
+    width: moderateScale(40),
+    height: moderateScale(40),
+    borderRadius: moderateScale(12),
+    backgroundColor: 'rgba(59,130,246,0.1)',
+    borderWidth: 2,
+    borderColor: colors.primary.main,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: spacing.sm,
+  },
+  sortIcon: {
+    fontSize: normalize(20),
+    color: colors.primary.main,
+    fontWeight: 'bold',
   },
   historyList: {
     marginBottom: verticalSpacing.lg,
@@ -1237,7 +1263,6 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(20),
     borderWidth: 2,
     padding: spacing.lg,
-    marginBottom: verticalSpacing.md,
   },
   historySummaryHeader: {
     flexDirection: 'row',
@@ -1434,6 +1459,50 @@ const styles = StyleSheet.create({
   },
   clearButton: {
     flexDirection: 'row',
+  },
+  modalThreatBadge: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: verticalScale(8),
+    borderRadius: moderateScale(12),
+  },
+  modalThreatText: {
+    fontSize: normalize(13),
+    fontWeight: 'bold',
+  },
+  modalStatusBadge: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: verticalScale(8),
+    borderRadius: moderateScale(12),
+    alignSelf: 'flex-start',
+  },
+  modalStatusText: {
+    fontSize: normalize(13),
+    fontWeight: 'bold',
+  },
+  modalRecommendations: {
+    backgroundColor: colors.neutral.gray100,
+    padding: spacing.md,
+    borderRadius: moderateScale(12),
+  },
+  modalRecommendationItem: {
+    fontSize: normalize(13),
+    color: colors.neutral.gray700,
+    marginBottom: verticalSpacing.xs,
+    lineHeight: normalize(20),
+  },
+  modalFooter: {
+    flexDirection: 'row',
+    padding: spacing.lg,
+    borderTopWidth: 1,
+    borderTopColor: colors.neutral.gray200,
+    gap: spacing.md,
+  },
+  modalDeleteButton: {
+    flex: 1,
+    flexDirection: 'row',
+    backgroundColor: colors.error.dark,
+    paddingVertical: verticalScale(12),
+    borderRadius: moderateScale(12),
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: moderateScale(14),
@@ -1441,7 +1510,29 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     ...shadows.sm,
   },
-  clearButtonText: {
+  exportOptionTitle: {
+    fontSize: normalize(16),
+    fontWeight: 'bold',
+    color: colors.neutral.gray900,
+    marginBottom: 4,
+  },
+  exportOptionDesc: {
+    fontSize: normalize(12),
+    color: colors.neutral.gray500,
+  },
+  checkmark: {
+    fontSize: normalize(24),
+    color: colors.primary.main,
+    fontWeight: 'bold',
+  },
+  exportCancelButton: {
+    marginHorizontal: spacing.lg,
+    backgroundColor: colors.neutral.gray200,
+    paddingVertical: verticalScale(14),
+    borderRadius: moderateScale(12),
+    alignItems: 'center',
+  },
+  exportCancelText: {
     fontSize: normalize(14),
     fontWeight: '600',
     marginLeft: spacing.sm,
