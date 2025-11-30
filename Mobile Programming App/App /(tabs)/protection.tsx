@@ -1,6 +1,7 @@
-// app/(tabs)/protection.tsx - INTERACTIVE PROTECTION SCREEN
+// app/(tabs)/protection.tsx - COMPLETE INTERACTIVE PROTECTION SCREEN WITH LOGOUT
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
   Alert,
@@ -14,6 +15,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useAuth } from '../../contexts/AuthContext';
+import CustomModal from '../components/CustomModal';
 import {
   colors,
   Icon,
@@ -28,9 +31,19 @@ import {
 } from '../components/shared';
 
 export default function ProtectionScreen() {
+  const router = useRouter();
+  const { user, logout } = useAuth();
   const [aiMonitoring, setAiMonitoring] = useState(true);
   const [zeroTrustEngine, setZeroTrustEngine] = useState(true);
   const [networkAnalysis, setNetworkAnalysis] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalData, setModalData] = useState({
+    title: '',
+    content: '',
+    icon: '',
+    gradientColors: ['#7C3AED', '#EC4899'],
+    data: null as any,
+  });
 
   const handleToggle = async (setter: React.Dispatch<React.SetStateAction<boolean>>, current: boolean, name: string) => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -42,6 +55,41 @@ export default function ProtectionScreen() {
     );
   };
 
+  const openModal = (title: string, content: string, icon?: string, gradientColors?: string[], data?: any) => {
+    setModalData({
+      title,
+      content,
+      icon: icon || '',
+      gradientColors: gradientColors || ['#7C3AED', '#EC4899'],
+      data: data || null
+    });
+    setModalVisible(true);
+  };
+
+  const handleLogout = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await logout();
+              await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              router.replace('/login');
+            } catch (error) {
+              Alert.alert('Error', 'Failed to logout. Please try again.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
@@ -49,11 +97,11 @@ export default function ProtectionScreen() {
       {/* Header */}
       <LinearGradient colors={['#0F172A', '#1E293B', '#0F172A']} style={styles.header}>
         <View style={styles.headerContent}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.headerLeft}
             onPress={async () => {
               await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              Alert.alert('ZeroTrust IoT', 'Advanced Protection System');
+              openModal('ZeroTrust IoT', 'Advanced Protection System', 'shield', ['#EF4444', '#EC4899']);
             }}
             activeOpacity={0.7}
           >
@@ -68,11 +116,11 @@ export default function ProtectionScreen() {
               <Text style={styles.headerSubtitle}>AI Security Platform</Text>
             </View>
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.headerRight}
             onPress={async () => {
               await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              Alert.alert('Protected Status', 'All security layers active');
+              openModal('Protected Status', 'All security layers active', 'shield', ['#059669', '#0D9488', '#06B6D4']);
             }}
             activeOpacity={0.7}
           >
@@ -86,14 +134,47 @@ export default function ProtectionScreen() {
       </LinearGradient>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        {/* User Info & Logout Section */}
+        {user && (
+          <TouchableOpacity
+            style={styles.userCard}
+            onPress={async () => {
+              await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              openModal('Account Information', `Name: ${user.first_name} ${user.last_name}\nEmail: ${user.email}\nUsername: ${user.username}`, 'user', ['#7C3AED', '#EC4899']);
+            }}
+            activeOpacity={0.9}
+          >
+            <LinearGradient colors={['#7C3AED', '#EC4899']} style={styles.userCardGradient}>
+              <View style={styles.userCardContent}>
+                <View style={styles.userAvatar}>
+                  <Text style={styles.userAvatarText}>
+                    {user.first_name?.charAt(0) || user.username?.charAt(0) || 'U'}
+                  </Text>
+                </View>
+                <View style={styles.userInfo}>
+                  <Text style={styles.userName}>
+                    {user.first_name || user.username || 'User'}
+                  </Text>
+                  <Text style={styles.userEmail}>{user.email}</Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                style={styles.logoutButton}
+                onPress={handleLogout}
+                activeOpacity={0.8}
+              >
+                <Icon name="cross" size={18} color="#FFF" />
+                <Text style={styles.logoutButtonText}>Logout</Text>
+              </TouchableOpacity>
+            </LinearGradient>
+          </TouchableOpacity>
+        )}
+
         {/* Main Protection Status */}
         <TouchableOpacity
           onPress={async () => {
             await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-            Alert.alert(
-              'Protection Status',
-              `All systems operational\n\nThreats Blocked: ${phishingStats.threatsBlocked}\nEmails Scanned: ${phishingStats.emailsScanned}\nURLs Checked: ${phishingStats.urlsChecked}\nSuccess Rate: ${phishingStats.successRate}%`
-            );
+            openModal('Protection Status', `All systems operational\n\nThreats Blocked: ${phishingStats.threatsBlocked}\nEmails Scanned: ${phishingStats.emailsScanned}\nURLs Checked: ${phishingStats.urlsChecked}\nSuccess Rate: ${phishingStats.successRate}%`, 'shield', ['#059669', '#0D9488', '#06B6D4']);
           }}
           activeOpacity={0.9}
         >
@@ -109,22 +190,22 @@ export default function ProtectionScreen() {
             </View>
             <View style={styles.protectionStats}>
               <View style={styles.protectionStatsColumn}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.protectionStatCard}
                   onPress={async () => {
                     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    Alert.alert('Threats Blocked', `${phishingStats.threatsBlocked} threats neutralized today`);
+                    openModal('Threats Blocked', `${phishingStats.threatsBlocked} malicious items detected and blocked`, 'shield', ['#EF4444', '#EC4899']);
                   }}
                   activeOpacity={0.8}
                 >
                   <Text style={styles.protectionStatValue}>{phishingStats.threatsBlocked}</Text>
                   <Text style={styles.protectionStatLabel}>Threats Blocked Today</Text>
                 </TouchableOpacity>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.protectionStatCard}
                   onPress={async () => {
                     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    Alert.alert('Emails Scanned', `${phishingStats.emailsScanned} emails analyzed for threats`);
+                    openModal('Emails Scanned', `${phishingStats.emailsScanned} emails analyzed for threats`, 'mail', ['#3B82F6', '#2563EB']);
                   }}
                   activeOpacity={0.8}
                 >
@@ -133,22 +214,22 @@ export default function ProtectionScreen() {
                 </TouchableOpacity>
               </View>
               <View style={styles.protectionStatsColumn}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.protectionStatCard}
                   onPress={async () => {
                     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    Alert.alert('URLs Checked', `${phishingStats.urlsChecked} URLs verified for security`);
+                    openModal('URLs Checked', `${phishingStats.urlsChecked} URLs verified for security`, 'link', ['#10B981', '#059669']);
                   }}
                   activeOpacity={0.8}
                 >
                   <Text style={styles.protectionStatValue}>{phishingStats.urlsChecked}</Text>
                   <Text style={styles.protectionStatLabel}>URLs Verified</Text>
                 </TouchableOpacity>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.protectionStatCard}
                   onPress={async () => {
                     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    Alert.alert('Detection Rate', `${phishingStats.successRate}% accurate threat detection`);
+                    openModal('Detection Rate', `${phishingStats.successRate}% accurate threat detection`, 'target', ['#06B6D4', '#0891B2']);
                   }}
                   activeOpacity={0.8}
                 >
@@ -162,11 +243,11 @@ export default function ProtectionScreen() {
 
         {/* Real-time Status */}
         <View style={styles.card}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.cardHeader}
             onPress={async () => {
               await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              Alert.alert('Real-time Protection', 'All protection layers are active and monitoring');
+              openModal('Real-time Protection', 'All protection layers are active and monitoring', 'activity', ['#3B82F6', '#2563EB']);
             }}
             activeOpacity={0.8}
           >
@@ -177,10 +258,7 @@ export default function ProtectionScreen() {
             <TouchableOpacity
               onPress={async () => {
                 await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                Alert.alert(
-                  'AI Monitoring',
-                  'Continuous threat analysis using machine learning algorithms'
-                );
+                openModal('AI Monitoring', 'Continuous threat analysis using machine learning algorithms', 'eye', ['#10B981', '#059669']);
               }}
               activeOpacity={0.8}
             >
@@ -208,10 +286,7 @@ export default function ProtectionScreen() {
             <TouchableOpacity
               onPress={async () => {
                 await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                Alert.alert(
-                  'Zero Trust Engine',
-                  'Never trust, always verify - validates every request'
-                );
+                openModal('Zero Trust Engine', 'Never trust, always verify - validates every request', 'lock', ['#3B82F6', '#2563EB']);
               }}
               activeOpacity={0.8}
             >
@@ -239,10 +314,7 @@ export default function ProtectionScreen() {
             <TouchableOpacity
               onPress={async () => {
                 await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                Alert.alert(
-                  'Network Analysis',
-                  'Deep packet inspection for network-level threats'
-                );
+                openModal('Network Analysis', 'Deep packet inspection for network-level threats', 'wifi', ['#A855F7', '#9333EA']);
               }}
               activeOpacity={0.8}
             >
@@ -270,11 +342,11 @@ export default function ProtectionScreen() {
         </View>
 
         {/* Threat Intelligence */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.threatIntelCard}
           onPress={async () => {
             await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            Alert.alert('Threat Intelligence', 'Real-time threat patterns detected globally');
+            openModal('Threat Intelligence', 'Real-time threat patterns detected globally', 'alert', ['#EF4444', '#F87171']);
           }}
           activeOpacity={0.9}
         >
@@ -283,12 +355,12 @@ export default function ProtectionScreen() {
             <Text style={styles.threatIntelTitle}>Threat Intelligence</Text>
           </View>
           {phishingPatterns.slice(0, 4).map((pattern, index) => (
-            <TouchableOpacity 
-              key={index} 
+            <TouchableOpacity
+              key={index}
               style={styles.threatPattern}
               onPress={async () => {
                 await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                Alert.alert('Threat Pattern', `"${pattern}"\n\nThis phrase is commonly used in phishing attacks`);
+                openModal('Threat Pattern', `"${pattern}"\n\nThis phrase is commonly used in phishing attacks`, 'alert', ['#EF4444', '#F87171']);
               }}
               activeOpacity={0.7}
             >
@@ -301,14 +373,11 @@ export default function ProtectionScreen() {
               </View>
             </TouchableOpacity>
           ))}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.threatNetwork}
             onPress={async () => {
               await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              Alert.alert(
-                'Global Threat Network',
-                'Connected to 50,000+ security nodes worldwide sharing real-time intelligence'
-              );
+              openModal('Global Threat Network', 'Connected to 50,000+ security nodes worldwide sharing real-time intelligence', 'users', ['#FB923C', '#F97316']);
             }}
             activeOpacity={0.8}
           >
@@ -324,11 +393,11 @@ export default function ProtectionScreen() {
 
         {/* Security Tips */}
         <View style={styles.card}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.cardHeader}
             onPress={async () => {
               await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              Alert.alert('Security Tips', 'Best practices to stay protected online');
+              openModal('Security Tips', 'Best practices to stay protected online', 'zap', ['#F59E0B', '#D97706']);
             }}
             activeOpacity={0.8}
           >
@@ -339,10 +408,7 @@ export default function ProtectionScreen() {
             <TouchableOpacity
               onPress={async () => {
                 await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                Alert.alert(
-                  'Verify Before Clicking',
-                  'Always hover over links to preview the destination URL before clicking. Look for suspicious domains or misspellings.'
-                );
+                openModal('Verify Before Clicking', 'Always hover over links to preview the destination URL before clicking. Look for suspicious domains or misspellings.', 'check', ['#10B981', '#059669']);
               }}
               activeOpacity={0.8}
             >
@@ -360,10 +426,7 @@ export default function ProtectionScreen() {
             <TouchableOpacity
               onPress={async () => {
                 await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                Alert.alert(
-                  'Check for HTTPS',
-                  'Legitimate sites use secure connections. Look for the lock icon in your browser address bar.'
-                );
+                openModal('Check for HTTPS', 'Legitimate sites use secure connections. Look for the lock icon in your browser address bar.', 'lock', ['#3B82F6', '#2563EB']);
               }}
               activeOpacity={0.8}
             >
@@ -381,10 +444,7 @@ export default function ProtectionScreen() {
             <TouchableOpacity
               onPress={async () => {
                 await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                Alert.alert(
-                  'Suspicious Email Signs',
-                  'Watch for urgent language, spelling errors, generic greetings, and requests for personal information.'
-                );
+                openModal('Suspicious Email Signs', 'Watch for urgent language, spelling errors, generic greetings, and requests for personal information.', 'mail', ['#A855F7', '#9333EA']);
               }}
               activeOpacity={0.8}
             >
@@ -490,6 +550,64 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: Platform.OS === 'ios' ? verticalScale(120) : verticalScale(100),
+  },
+  userCard: {
+    marginBottom: verticalSpacing.lg,
+    borderRadius: moderateScale(20),
+    overflow: 'hidden',
+    ...shadows.lg,
+  },
+  userCardGradient: {
+    padding: spacing.lg,
+  },
+  userCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: verticalSpacing.md,
+  },
+  userAvatar: {
+    width: moderateScale(56),
+    height: moderateScale(56),
+    borderRadius: moderateScale(28),
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.md,
+  },
+  userAvatarText: {
+    fontSize: normalize(24),
+    fontWeight: 'bold',
+    color: colors.neutral.white,
+  },
+  userInfo: {
+    flex: 1,
+  },
+  userName: {
+    fontSize: normalize(18),
+    fontWeight: 'bold',
+    color: colors.neutral.white,
+    marginBottom: 4,
+  },
+  userEmail: {
+    fontSize: normalize(13),
+    color: 'rgba(255,255,255,0.8)',
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(239,68,68,0.2)',
+    paddingVertical: verticalScale(12),
+    paddingHorizontal: spacing.lg,
+    borderRadius: moderateScale(12),
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  logoutButtonText: {
+    fontSize: normalize(15),
+    fontWeight: '600',
+    color: colors.neutral.white,
+    marginLeft: spacing.sm,
   },
   protectionHeader: {
     borderRadius: moderateScale(20),
