@@ -2,24 +2,26 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform, View } from 'react-native';
+import { useTheme } from '../../contexts/ThemeContext';
 import {
-  colors,
   Icon,
   normalize,
   verticalScale
 } from '../components/shared';
 
 export default function TabLayout() {
+  const { isDark, colors: themeColors } = useTheme();
+  
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: colors.primary.main,
-        tabBarInactiveTintColor: colors.neutral.gray400,
+        tabBarActiveTintColor: themeColors.primary,
+        tabBarInactiveTintColor: isDark ? themeColors.textTertiary : themeColors.textSecondary,
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: colors.neutral.white,
+          backgroundColor: isDark ? themeColors.surface : themeColors.cardBackground,
           borderTopWidth: 1,
-          borderTopColor: colors.neutral.gray200,
+          borderTopColor: isDark ? themeColors.border : themeColors.borderLight,
           height: Platform.OS === 'ios' ? verticalScale(88) : verticalScale(70),
           paddingBottom: Platform.OS === 'ios' ? verticalScale(34) : verticalScale(8),
           paddingTop: verticalScale(8),
@@ -38,6 +40,7 @@ export default function TabLayout() {
           fontWeight: '600',
           marginTop: verticalScale(4),
           textAlign: 'center',
+          color: isDark ? themeColors.textSecondary : themeColors.text,
         },
         tabBarItemStyle: {
           paddingVertical: verticalScale(6),
