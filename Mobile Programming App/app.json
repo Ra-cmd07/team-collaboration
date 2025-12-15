@@ -1,1 +1,59 @@
+{
+  "expo": {
+    "name": "ZeroTrust",
+    "slug": "zero-trust-iot",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icons/icon.png",
+    "scheme": "zerotrust",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "icon": {
+        "light": "./assets/images/icons/Light.png",
+        "dark": "./assets/images/icons/Dark.png",
+        "tinted": "./assets/images/icons/Tinted.png"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#FFFFFF",
+        "foregroundImage": "./assets/images/icons/adaptive-icon.png"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "package": "com.anonymous.zerotrust"
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#FFFFFF",
+          "image": "./assets/images/icons/splash-icon-dark.png",
+          "dark": {
+            "image": "./assets/images/icons/splash-icon-light.png",
+            "backgroundColor": "#FFFFFF"
+          },
+          "imageWidth": 200
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "000386a8-a674-4240-9680-92822520f94d"
+      }
+    }
+  }
+}
 
