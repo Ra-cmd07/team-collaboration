@@ -2,12 +2,12 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform, View } from 'react-native';
-import { useTheme } from '../../contexts/ThemeContext';
 import {
   Icon,
   normalize,
   verticalScale
-} from '../components/shared';
+} from '../../components/shared';
+import { useTheme } from '../../contexts/ThemeContext';
 
 export default function TabLayout() {
   const { isDark, colors: themeColors } = useTheme();
@@ -22,8 +22,8 @@ export default function TabLayout() {
           backgroundColor: isDark ? themeColors.surface : themeColors.cardBackground,
           borderTopWidth: 1,
           borderTopColor: isDark ? themeColors.border : themeColors.borderLight,
-          height: Platform.OS === 'ios' ? verticalScale(88) : verticalScale(70),
-          paddingBottom: Platform.OS === 'ios' ? verticalScale(34) : verticalScale(8),
+          height: Platform.OS === 'ios' ? verticalScale(88) : verticalScale(120),
+          paddingBottom: Platform.OS === 'ios' ? verticalScale(34) : verticalScale(50),
           paddingTop: verticalScale(8),
           position: 'absolute',
           bottom: 0,
