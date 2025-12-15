@@ -1,4 +1,4 @@
-// contexts/ThemeContext.tsx
+// contexts/ThemeContext.tsx - ENHANCED LIGHT MODE
 import React, { createContext, ReactNode, useContext, useState } from 'react';
 import { useColorScheme } from 'react-native';
 
@@ -62,52 +62,52 @@ interface ThemeContextType {
 }
 
 const lightTheme: ThemeColors = {
-  // Backgrounds
-  background: '#F3F4F6',
-  backgroundSecondary: '#FFFFFF',
-  backgroundTertiary: '#F8FAFC',
-  surface: '#FFFFFF',
-  surfaceElevated: '#FFFFFF',
+  // Backgrounds - Brighter, cleaner whites and subtle colors
+  background: '#FFFFFF',           // Pure white instead of gray
+  backgroundSecondary: '#F8FAFC',  // Very light blue-gray
+  backgroundTertiary: '#EFF6FF',   // Light blue tint
+  surface: '#FFFFFF',              // Pure white
+  surfaceElevated: '#FFFFFF',      // Pure white with shadows
   
-  // Text
-  text: '#111827',
-  textSecondary: '#6B7280',
-  textTertiary: '#9CA3AF',
+  // Text - Darker, higher contrast
+  text: '#0F172A',                 // Almost black for maximum readability
+  textSecondary: '#475569',        // Darker gray for better visibility
+  textTertiary: '#64748B',         // Medium gray, still readable
   textInverse: '#FFFFFF',
   
-  // Borders
-  border: '#E5E7EB',
-  borderLight: '#F3F4F6',
+  // Borders - More visible
+  border: '#CBD5E1',               // More visible border
+  borderLight: '#E2E8F0',          // Subtle but visible
   
-  // Status
-  primary: '#3B82F6',
-  primaryLight: '#60A5FA',
-  primaryDark: '#2563EB',
+  // Status - More vibrant colors
+  primary: '#2563EB',              // Richer blue
+  primaryLight: '#3B82F6',         // Bright blue
+  primaryDark: '#1E40AF',          // Deep blue
   
-  success: '#10B981',
-  successLight: '#34D399',
-  successDark: '#059669',
+  success: '#059669',              // Vibrant green
+  successLight: '#10B981',         // Bright green
+  successDark: '#047857',          // Deep green
   
-  warning: '#F59E0B',
-  warningLight: '#FBBF24',
-  warningDark: '#D97706',
+  warning: '#D97706',              // Rich orange
+  warningLight: '#F59E0B',         // Bright orange
+  warningDark: '#B45309',          // Deep orange
   
-  error: '#EF4444',
-  errorLight: '#F87171',
-  errorDark: '#DC2626',
+  error: '#DC2626',                // Vivid red
+  errorLight: '#EF4444',           // Bright red
+  errorDark: '#B91C1C',            // Deep red
   
-  // Semantic
-  cardBackground: 'rgba(255, 255, 255, 0.9)',
-  inputBackground: '#F8FAFC',
-  inputBorder: '#E2E8F0',
+  // Semantic - Clean and clear
+  cardBackground: '#FFFFFF',       // Pure white cards
+  inputBackground: '#F8FAFC',      // Subtle background
+  inputBorder: '#CBD5E1',          // Visible borders
   
-  // Gradients
-  gradientStart: '#0F172A',
-  gradientMiddle: '#1E293B',
-  gradientEnd: '#0F172A',
+  // Gradients - Soft and pleasant
+  gradientStart: '#EFF6FF',        // Light blue
+  gradientMiddle: '#DBEAFE',       // Sky blue
+  gradientEnd: '#EFF6FF',          // Light blue
   
   // Shadow
-  shadowColor: '#000000',
+  shadowColor: '#1E293B',          // Darker shadows for depth
 };
 
 const darkTheme: ThemeColors = {
