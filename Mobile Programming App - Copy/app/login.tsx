@@ -104,9 +104,9 @@ export default function LoginScreen() {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
       
-      {/* Background Gradient */}
+   {/* Background Gradient */}
       <LinearGradient
-        colors={['#0f172a', '#1e3a8a', '#0f172a']}
+        colors={['#261241ff', '#261241ff', '#261241ff']}
         style={styles.gradient}
       >
         {/* Animated Background Circles */}
